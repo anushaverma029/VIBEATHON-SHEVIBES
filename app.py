@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from database import get_db_connection, init_db
@@ -11,14 +11,14 @@ CORS(app)
 # =========================================================
 # HOME
 # =========================================================
-
 @app.route("/", methods=["GET"])
 def home():
+    return send_from_directory(".", "index.html")
 
-    return jsonify({
-        "message": "CampusCue Backend is Running!",
-        "status": "success"
-    })
+
+@app.route("/<path:filename>")
+def serve_frontend(filename):
+    return send_from_directory(".", filename)
 
 
 # =========================================================
@@ -1557,8 +1557,8 @@ def student_alerts(user_id):
         "alerts": alerts,
         "count": len(alerts)
     })
-
 if __name__ == "__main__":
+    import os
 
     init_db()
 
@@ -1569,6 +1569,7 @@ if __name__ == "__main__":
     print("Server: http://127.0.0.1:5000")
     print("---------------------------------------")
 
-    import os
-
-app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000))
+    )
