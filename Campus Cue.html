@@ -3,362 +3,334 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CampusCue — Student Portal</title>
+  <title>CampusCue — Student Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-</head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans pb-20">
-
-  <!-- PAGE 1: LOGIN / ONBOARDING SCREEN -->
-  <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-slate-800 border border-slate-700/80 rounded-2xl p-6 shadow-xl space-y-6">
-      
-      <!-- Logo & Header -->
-      <div class="text-center space-y-2">
-        <div class="w-12 h-12 bg-indigo-600 rounded-xl mx-auto flex items-center justify-center text-white shadow-lg">
-          <i data-lucide="radar" class="w-7 h-7"></i>
-        </div>
-        <h1 class="text-xl font-bold text-white tracking-tight">Welcome to CampusCue</h1>
-        <p class="text-xs text-slate-400">Enter your student details to access your personalized smart notice feed.</p>
-      </div>
-
-      <!-- Login Form -->
-      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">Full Name</label>
-          <input type="text" id="input-name" required value="Kenisha Verma" placeholder="Enter your full name" 
-            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">Enrollment Number</label>
-          <input type="text" id="input-enrollment" required value="02914802826" placeholder="e.g. 02914802826" 
-            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
-          <input type="email" id="input-email" required value="kenisha.v@campus.edu" placeholder="student@university.edu" 
-            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">Mobile Number</label>
-          <input type="tel" id="input-mobile" required value="+91 9876543210" placeholder="+91 XXXXX XXXXX" 
-            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-
-        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-3 rounded-xl shadow-md transition duration-150 flex items-center justify-center gap-2 mt-2">
-          <span>Access CampusCue Feed</span>
-          <i data-lucide="arrow-right" class="w-4 h-4"></i>
-        </button>
-      </form>
-    </div>
-  </div>
-
-
-  <!-- PAGE 2: MAIN DASHBOARD (HIDDEN UNTIL LOGIN) -->
-  <div id="dashboard-screen" class="hidden flex-col min-h-screen">
-
-    <!-- TOP BAR / HEADER -->
-    <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-10 shadow-md">
-      <div class="max-w-md mx-auto flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <div id="user-avatar" class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
-            K
-          </div>
-          <div>
-            <h1 class="text-base font-bold text-white flex items-center gap-1.5">
-              <span id="display-name">Kenisha Verma</span>
-              <span id="profile-badge" class="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-normal">1st Year ECE-AI</span>
-            </h1>
-            <p id="display-enrollment" class="text-[11px] text-slate-400">Enroll: 02914802826</p>
-          </div>
-        </div>
-        
-        <button onclick="handleLogout()" class="text-xs text-slate-400 hover:text-rose-400 p-1 rounded-lg border border-slate-700 flex items-center gap-1">
-          <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
-          <span>Exit</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- MAIN CONTAINER -->
-    <main class="max-w-md mx-auto w-full p-4 flex-1 space-y-6">
-
-      <!-- NAVIGATION TABS -->
-      <div class="flex bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
-        <button onclick="switchTab('feed')" id="tab-feed" class="flex-1 py-2 text-center text-xs font-semibold rounded-lg bg-indigo-600 text-white shadow-sm transition">
-          Feed View
-        </button>
-        <button onclick="switchTab('tasks')" id="tab-tasks" class="flex-1 py-2 text-center text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition">
-          Tasks <span id="task-count" class="ml-1 bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">2</span>
-        </button>
-        <button onclick="switchTab('diffs')" id="tab-diffs" class="flex-1 py-2 text-center text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition">
-          Changes <span id="diff-count" class="ml-1 bg-amber-500 text-slate-950 font-bold text-[10px] px-1.5 py-0.5 rounded-full">1</span>
-        </button>
-      </div>
-
-      <!-- VIEW 1: MAIN FEEDS (Must Do / Should Know / You May Like) -->
-      <div id="view-feed" class="space-y-6">
-
-        <!-- MUST DO (RED) -->
-        <section class="space-y-3">
-          <div class="flex items-center justify-between">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-              Must Do
-            </h2>
-            <span class="text-[11px] text-slate-400">Urgent & Deadlines</span>
-          </div>
-          <div id="must-do-container" class="space-y-3"></div>
-        </section>
-
-        <!-- SHOULD KNOW (YELLOW) -->
-        <section class="space-y-3">
-          <div class="flex items-center justify-between">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-              Should Know
-            </h2>
-            <span class="text-[11px] text-slate-400">Important Updates</span>
-          </div>
-          <div id="should-know-container" class="space-y-3"></div>
-        </section>
-
-        <!-- YOU MAY LIKE (GREEN) -->
-        <section class="space-y-3">
-          <div class="flex items-center justify-between">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-              You May Like
-            </h2>
-            <span class="text-[11px] text-slate-400">Personalized Events</span>
-          </div>
-          <div id="you-may-like-container" class="space-y-3"></div>
-        </section>
-
-      </div>
-
-      <!-- VIEW 2: ACTIONABLE TASKS PAGE -->
-      <div id="view-tasks" class="hidden space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-          <h2 class="text-sm font-bold text-slate-200">Auto-Generated Tasks</h2>
-          <span class="text-xs text-slate-400">Derived from notices</span>
-        </div>
-        <div id="tasks-container" class="space-y-2"></div>
-      </div>
-
-      <!-- VIEW 3: RADAR CHANGE DETECTOR (DIFF PAGE) -->
-      <div id="view-diffs" class="hidden space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-          <h2 class="text-sm font-bold text-amber-400 flex items-center gap-2">
-            <i data-lucide="radar" class="w-4 h-4"></i> Radar Change Detector
-          </h2>
-          <span class="text-xs text-slate-400">Semantic Diffs</span>
-        </div>
-        <p class="text-xs text-slate-400">
-          CampusCue detected changes between recently updated notices and previous announcements.
-        </p>
-        <div id="diffs-container" class="space-y-4"></div>
-      </div>
-
-    </main>
-
-    <!-- BOTTOM NAVIGATION BAR -->
-    <nav class="fixed bottom-0 inset-x-0 bg-slate-800/90 backdrop-blur-md border-t border-slate-700/80 p-3 z-20">
-      <div class="max-w-md mx-auto flex justify-around text-slate-400">
-        <button onclick="switchTab('feed')" class="flex flex-col items-center gap-1 hover:text-indigo-400 focus:text-indigo-400">
-          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-          <span class="text-[10px] font-medium">Dashboard</span>
-        </button>
-        <button onclick="switchTab('tasks')" class="flex flex-col items-center gap-1 hover:text-indigo-400 focus:text-indigo-400">
-          <i data-lucide="check-square" class="w-5 h-5"></i>
-          <span class="text-[10px] font-medium">Tasks</span>
-        </button>
-        <button onclick="switchTab('diffs')" class="flex flex-col items-center gap-1 hover:text-indigo-400 focus:text-indigo-400">
-          <i data-lucide="radar" class="w-5 h-5"></i>
-          <span class="text-[10px] font-medium">Radar</span>
-        </button>
-      </div>
-    </nav>
-  </div>
-
-  <!-- JAVASCRIPT LOGIC -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script>
-    // STUDENT NOTICES DATA
-    const studentData = {
-      profile: { name: "Kenisha Verma", branch: "ECE-AI", year: 1, section: "A", enroll: "" },
-      notices: [
-        {
-          id: "notice-ss-1",
-          title: "Signals & Systems (SS) Assignment Submission",
-          category: "Must Do",
-          audience: "1st Year ECE-AI",
-          summary: "Complete and submit Assignment 1 covering Continuous-Time Signals and LTI Systems.",
-          actionRequired: "Submit SS Assignment 1 PDF on portal",
-          deadline: "Oct 1, 2026",
-          hasChanged: false
-        },
-        {
-          id: "notice-ss-2",
-          title: "Signals & Systems Lecture Venue Shift",
-          category: "Should Know",
-          audience: "1st Year ECE-AI",
-          summary: "SS Thursday lecture moved to main DSP Hardware Lab due to live demonstration.",
-          hasChanged: true,
-          diff: {
-            field: "Venue & Time",
-            oldValue: "Block B, Room 204 @ 10:00 AM",
-            newValue: "DSP Hardware Lab (Block E) @ 10:00 AM"
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            pinkbrand: {
+              50: '#fdf2f8',
+              100: '#fce7f3',
+              200: '#fbcfe8',
+              300: '#f472b6',
+              500: '#ec4899',
+              600: '#db2777',
+              700: '#be185d',
+              900: '#831843',
+            }
           }
-        },
-        {
-          id: "notice-ss-3",
-          title: "IEEE Signal Processing & AI Hardware Orientation",
-          category: "You May Like",
-          audience: "ECE-AI First Years",
-          summary: "Introductory session to MATLAB, FPGA board programming, and hardware AI accelerators.",
-          actionRequired: "RSVP for orientation session",
-          deadline: "Sep 28, 2026",
-          hasChanged: false
         }
-      ]
-    };
-
-    // HANDLE LOGIN SUBMISSION
-    function handleLogin(event) {
-      event.preventDefault();
-
-      const name = document.getElementById("input-name").value;
-      const enroll = document.getElementById("input-enrollment").value;
-
-      // Update student profile state
-      studentData.profile.name = name;
-      studentData.profile.enroll = enroll;
-
-      // Update UI elements
-      document.getElementById("display-name").innerText = name;
-      document.getElementById("display-enrollment").innerText = `Enroll: ${enroll}`;
-      document.getElementById("user-avatar").innerText = name.charAt(0).toUpperCase();
-
-      // Hide Login, Show Dashboard
-      document.getElementById("login-screen").classList.add("hidden");
-      document.getElementById("dashboard-screen").classList.remove("hidden");
-      document.getElementById("dashboard-screen").classList.add("flex");
-
-      renderApp();
+      }
     }
-
-    // HANDLE LOGOUT
-    function handleLogout() {
-      document.getElementById("dashboard-screen").classList.add("hidden");
-      document.getElementById("dashboard-screen").classList.remove("flex");
-      document.getElementById("login-screen").classList.remove("hidden");
+  </script>
+  <style>
+    /* Custom background pattern featuring hearts, bows, and sparkles */
+    .bg-pattern {
+      background-color: #fdf2f8;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><g fill="none" stroke="%23db2777" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.35"><path d="M40 30 C35 20, 20 20, 20 35 C20 45, 40 65, 40 65 C40 65, 60 45, 60 35 C60 20, 45 20, 40 30 Z" transform="scale(0.3) translate(60, 40)"/><path d="M140 130 C135 120, 120 120, 120 135 C120 145, 140 165, 140 165 C140 165, 160 145, 160 135 C160 120, 145 120, 140 130 Z" transform="scale(0.3) translate(280, 240)"/><path d="M120 40 C110 30, 95 30, 95 45 C95 55, 120 75, 120 75 C120 75, 145 55, 145 45 C145 30, 130 30, 120 40 Z" transform="scale(0.25) translate(200, 40)"/><g transform="translate(140, 30) scale(0.35)"><path d="M25 25 C10 10, 0 25, 20 30 C0 35, 10 50, 25 35 C40 50, 50 35, 30 30 C50 25, 40 10, 25 25 Z"/><path d="M20 30 L10 50 M30 30 L40 50"/></g><g transform="translate(30, 130) scale(0.35)"><path d="M25 25 C10 10, 0 25, 20 30 C0 35, 10 50, 25 35 C40 50, 50 35, 30 30 C50 25, 40 10, 25 25 Z"/><path d="M20 30 L10 50 M30 30 L40 50"/></g><path d="M100 100 M100 92 L100 108 M92 100 L108 100 M95 95 L105 105 M105 95 L95 105" transform="scale(0.4) translate(40, 180)"/><path d="M100 100 M100 92 L100 108 M92 100 L108 100 M95 95 L105 105 M105 95 L95 105" transform="scale(0.4) translate(380, 80)"/><path d="M100 100 M100 92 L100 108 M92 100 L108 100" transform="scale(0.3) translate(180, 380)"/><circle cx="20" cy="90" r="1" fill="%23db2777" opacity="0.4"/><circle cx="170" cy="80" r="1" fill="%23db2777" opacity="0.4"/><circle cx="110" cy="170" r="1" fill="%23db2777" opacity="0.4"/><circle cx="80" cy="20" r="1" fill="%23db2777" opacity="0.4"/></g></svg>');
+      background-repeat: repeat;
+      background-size: 180px 180px;
     }
+  </style>
+</head>
+<body class="bg-pattern text-slate-800 font-sans min-h-screen flex flex-col antialiased">
 
-    // RENDER CONTROLLER
-    function renderApp() {
-      const mustDoContainer = document.getElementById("must-do-container");
-      const shouldKnowContainer = document.getElementById("should-know-container");
-      const youMayLikeContainer = document.getElementById("you-may-like-container");
-      const tasksContainer = document.getElementById("tasks-container");
-      const diffsContainer = document.getElementById("diffs-container");
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="bg-white/90 backdrop-blur-md border-b border-pinkbrand-100 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-xl bg-pinkbrand-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-pinkbrand-200">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <span class="font-bold text-xl text-slate-900 tracking-tight">CampusCue</span>
+      </div>
 
-      mustDoContainer.innerHTML = "";
-      shouldKnowContainer.innerHTML = "";
-      youMayLikeContainer.innerHTML = "";
-      tasksContainer.innerHTML = "";
-      diffsContainer.innerHTML = "";
+      <!-- Navigation Tabs -->
+      <nav class="hidden md:flex items-center space-x-1 bg-pinkbrand-50/80 p-1 rounded-xl border border-pinkbrand-100">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-pinkbrand-600 shadow-sm">
+          <i class="fa-solid fa-border-all"></i> Dashboard
+        </button>
+        <button onclick="switchTab('notices')" id="nav-notices" class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-pinkbrand-600">
+          <i class="fa-solid fa-bullhorn"></i> Notices
+        </button>
+        <button onclick="switchTab('changes')" id="nav-changes" class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-pinkbrand-600">
+          <i class="fa-solid fa-clock-rotate-left"></i> Changes
+        </button>
+        <button onclick="switchTab('tasks')" id="nav-tasks" class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-pinkbrand-600">
+          <i class="fa-solid fa-list-check"></i> Tasks 
+          <span id="badge-tasks-count" class="bg-pinkbrand-200 text-pinkbrand-700 text-xs px-2 py-0.5 rounded-full font-bold">4</span>
+        </button>
+      </nav>
 
-      let taskCount = 0;
-      let diffCount = 0;
+      <!-- Search & User Profile -->
+      <div class="flex items-center gap-3">
+        <div class="relative hidden sm:block w-48 lg:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-pinkbrand-300 text-sm"></i>
+          <input type="text" placeholder="Search notices..." class="w-full bg-white/80 border border-pinkbrand-200 rounded-lg pl-9 pr-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pinkbrand-500 text-slate-700 placeholder-slate-400 transition">
+        </div>
 
-      studentData.notices.forEach(notice => {
-        // Card Component
-        const card = document.createElement("div");
-        card.className = "bg-slate-800/90 border border-slate-700/80 rounded-xl p-3.5 space-y-2.5 shadow-sm";
-
-        card.innerHTML = `
-          <div class="flex items-start justify-between gap-2">
-            <h3 class="text-xs font-bold text-slate-100 leading-snug">${notice.title}</h3>
-            ${notice.hasChanged ? `<span class="shrink-0 bg-amber-400 text-slate-950 font-extrabold text-[9px] px-1.5 py-0.5 rounded flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> CHANGED</span>` : ''}
+        <div class="flex items-center gap-2 border-l border-pinkbrand-100 pl-3">
+          <div class="w-9 h-9 rounded-full bg-pinkbrand-600 text-white flex items-center justify-center font-semibold text-sm shadow-sm">
+            AN
           </div>
-          <p class="text-xs text-slate-300 leading-relaxed">${notice.summary}</p>
-          <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-700/50 text-slate-400">
-            <span>Target: ${notice.audience}</span>
-            ${notice.deadline ? `<span class="text-rose-400 font-semibold">Due: ${notice.deadline}</span>` : ''}
+          <span class="font-medium text-sm text-slate-700 hidden lg:inline">Ananya</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-6xl w-full mx-auto px-4 py-6 flex-1 space-y-8">
+
+    <!-- VIEW 1: DASHBOARD MAIN -->
+    <div id="view-dashboard" class="space-y-8">
+      
+      <!-- Greeting Banner -->
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-900 flex items-center gap-2">
+          Good evening, Ananya 👋
+        </h1>
+        <p class="text-sm text-slate-500 mt-1">Here's what's happening on campus today.</p>
+      </div>
+
+      <!-- Overview Stats Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <!-- Card 1 -->
+        <div class="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-rose-100 shadow-sm hover:shadow-md transition">
+          <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
+            <i class="fa-solid fa-triangle-exclamation"></i>
           </div>
-        `;
+          <div class="text-2xl font-bold text-slate-900">5</div>
+          <div class="text-xs font-medium text-slate-500 mt-1">Important Updates</div>
+        </div>
 
-        // Category Placement
-        if (notice.category === "Must Do") mustDoContainer.appendChild(card);
-        else if (notice.category === "Should Know") shouldKnowContainer.appendChild(card);
-        else if (notice.category === "You May Like") youMayLikeContainer.appendChild(card);
+        <!-- Card 2 -->
+        <div class="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-pinkbrand-100 shadow-sm hover:shadow-md transition">
+          <div class="w-8 h-8 rounded-lg bg-pinkbrand-50 text-pinkbrand-600 flex items-center justify-center mb-3">
+            <i class="fa-solid fa-envelope-open-text"></i>
+          </div>
+          <div class="text-2xl font-bold text-slate-900">8</div>
+          <div class="text-xs font-medium text-slate-500 mt-1">New Notices</div>
+        </div>
 
-        // Task Item Conversion
-        if (notice.actionRequired) {
-          taskCount++;
-          const taskCard = document.createElement("div");
-          taskCard.className = "flex items-center gap-3 bg-slate-800 border border-slate-700/70 p-3 rounded-lg";
-          taskCard.innerHTML = `
-            <input type="checkbox" class="w-4 h-4 rounded border-slate-600 text-indigo-600 focus:ring-indigo-500 bg-slate-700">
-            <div class="flex-1">
-              <p class="text-xs font-semibold text-slate-200">${notice.actionRequired}</p>
-              <p class="text-[10px] text-slate-400">Source: ${notice.title}</p>
-            </div>
-            ${notice.deadline ? `<span class="text-[10px] text-rose-400 font-medium">${notice.deadline}</span>` : ''}
-          `;
-          tasksContainer.appendChild(taskCard);
-        }
+        <!-- Card 3 -->
+        <div class="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-amber-100 shadow-sm hover:shadow-md transition">
+          <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+            <i class="fa-solid fa-arrows-rotate"></i>
+          </div>
+          <div class="text-2xl font-bold text-slate-900">2</div>
+          <div class="text-xs font-medium text-slate-500 mt-1">Recent Changes</div>
+        </div>
 
-        // Radar Semantic Diff View
-        if (notice.hasChanged && notice.diff) {
-          diffCount++;
-          const diffCard = document.createElement("div");
-          diffCard.className = "bg-slate-800 border border-amber-500/30 rounded-xl p-3.5 space-y-2";
-          diffCard.innerHTML = `
-            <div class="flex items-center justify-between">
-              <h4 class="text-xs font-bold text-slate-200">${notice.title}</h4>
-              <span class="text-[10px] text-amber-400 font-mono">${notice.diff.field} Update</span>
-            </div>
-            <div class="grid grid-cols-2 gap-2 text-xs pt-1">
-              <div class="bg-rose-950/40 border border-rose-800/40 p-2 rounded text-rose-300">
-                <span class="block text-[9px] uppercase font-bold text-rose-500">Previous</span>
-                <span class="line-through">${notice.diff.oldValue}</span>
+        <!-- Card 4 -->
+        <div class="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-emerald-100 shadow-sm hover:shadow-md transition">
+          <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+            <i class="fa-solid fa-square-check"></i>
+          </div>
+          <div class="text-2xl font-bold text-slate-900">3</div>
+          <div class="text-xs font-medium text-slate-500 mt-1">Pending Tasks</div>
+        </div>
+      </div>
+
+      <!-- Priority Section: Important for you -->
+      <section class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-lg text-slate-900 flex items-center gap-2">
+            Important for you
+          </h2>
+          <button onclick="switchTab('notices')" class="text-xs font-semibold text-pinkbrand-600 hover:text-pinkbrand-700 flex items-center gap-1">
+            View all <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          
+          <!-- Notice Card 1 -->
+          <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Exams
+                </span>
+                <span class="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <i class="fa-solid fa-arrows-rotate text-[10px]"></i> Updated
+                </span>
               </div>
-              <div class="bg-emerald-950/40 border border-emerald-800/40 p-2 rounded text-emerald-300">
-                <span class="block text-[9px] uppercase font-bold text-emerald-400">Updated</span>
-                <span class="font-semibold">${notice.diff.newValue}</span>
+
+              <h3 class="font-bold text-base text-slate-900 leading-snug">Mid-Semester Examination Schedule</h3>
+
+              <div class="grid grid-cols-2 gap-2 bg-pinkbrand-50/60 p-3 rounded-xl border border-pinkbrand-100 text-xs">
+                <div>
+                  <span class="text-slate-400 font-medium block uppercase text-[10px]">For</span>
+                  <span class="font-bold text-slate-700">1st Year ECE</span>
+                </div>
+                <div>
+                  <span class="text-slate-400 font-medium block uppercase text-[10px]">Date</span>
+                  <span class="font-bold text-slate-700">18 September</span>
+                </div>
+                <div>
+                  <span class="text-slate-400 font-medium block uppercase text-[10px]">Time</span>
+                  <span class="font-bold text-slate-700">11:00 AM</span>
+                </div>
+                <div>
+                  <span class="text-slate-400 font-medium block uppercase text-[10px]">Venue</span>
+                  <span class="font-bold text-slate-700">Block C</span>
+                </div>
               </div>
             </div>
-          `;
-          diffsContainer.appendChild(diffCard);
-        }
+
+            <button onclick="switchTab('notices')" class="w-full bg-pinkbrand-600 hover:bg-pinkbrand-700 text-white font-semibold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-sm shadow-pinkbrand-200">
+              View Notice <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+
+          <!-- Notice Card 2 -->
+          <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Deadlines
+                </span>
+                <span class="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <i class="fa-solid fa-arrows-rotate text-[10px]"></i> Updated
+                </span>
+              </div>
+
+              <h3 class="font-bold text-base text-slate-900 leading-snug">Assignment Submission Deadline Extended</h3>
+
+              <p class="text-xs text-slate-500 leading-relaxed">
+                The assignment deadline for CSE-201 has been moved to 22 September. Submit online before 11:59 PM.
+              </p>
+            </div>
+
+            <button onclick="switchTab('notices')" class="w-full bg-pinkbrand-600 hover:bg-pinkbrand-700 text-white font-semibold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-sm shadow-pinkbrand-200">
+              View Notice <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
+    <!-- VIEW 2: NOTICES -->
+    <div id="view-notices" class="hidden space-y-6">
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-900">All Notices</h1>
+        <p class="text-sm text-slate-500 mt-1">Browse and search through all campus notices</p>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-2">
+        <button class="bg-pinkbrand-600 text-white px-4 py-1.5 rounded-xl text-xs font-bold shadow-sm">All</button>
+        <button class="bg-white/90 border border-pinkbrand-100 text-slate-600 hover:bg-pinkbrand-50 px-4 py-1.5 rounded-xl text-xs font-semibold">Exams</button>
+        <button class="bg-white/90 border border-pinkbrand-100 text-slate-600 hover:bg-pinkbrand-50 px-4 py-1.5 rounded-xl text-xs font-semibold">Events</button>
+        <button class="bg-white/90 border border-pinkbrand-100 text-slate-600 hover:bg-pinkbrand-50 px-4 py-1.5 rounded-xl text-xs font-semibold">Deadlines</button>
+        <button class="bg-white/90 border border-pinkbrand-100 text-slate-600 hover:bg-pinkbrand-50 px-4 py-1.5 rounded-xl text-xs font-semibold">Academic</button>
+      </div>
+
+      <!-- List -->
+      <div class="space-y-3">
+        <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 p-4 rounded-2xl shadow-sm flex items-center justify-between">
+          <div>
+            <h4 class="font-bold text-slate-900 text-sm">Annual Tech Fest Aurora 2026</h4>
+            <p class="text-xs text-slate-500 mt-1">Registration open for all branches from 20-25 September.</p>
+          </div>
+          <span class="text-xs font-bold text-pinkbrand-600 bg-pinkbrand-50 px-3 py-1 rounded-lg">Events</span>
+        </div>
+        <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 p-4 rounded-2xl shadow-sm flex items-center justify-between">
+          <div>
+            <h4 class="font-bold text-slate-900 text-sm">Library Timing Revision</h4>
+            <p class="text-xs text-slate-500 mt-1">Library will now stay open until 10 PM on weekdays.</p>
+          </div>
+          <span class="text-xs font-bold text-pinkbrand-600 bg-pinkbrand-50 px-3 py-1 rounded-lg">Administrative</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: RECENT CHANGES -->
+    <div id="view-changes" class="hidden space-y-6">
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-900">Recent Changes</h1>
+        <p class="text-sm text-slate-500 mt-1">See exactly what changed in your campus notices</p>
+      </div>
+
+      <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 p-5 rounded-2xl shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
+            Venue Shift
+          </span>
+          <span class="text-xs text-slate-400">Updated 2 hours ago</span>
+        </div>
+        <h3 class="font-bold text-slate-900 text-base">Mid-Semester Examination Schedule</h3>
+        <div class="flex items-center gap-3 text-xs bg-pinkbrand-50/60 p-3 rounded-xl">
+          <span class="text-slate-400 line-through">Block A</span>
+          <i class="fa-solid fa-arrow-right text-pinkbrand-600"></i>
+          <span class="font-bold text-pinkbrand-700">Block C</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: TASKS -->
+    <div id="view-tasks" class="hidden space-y-6">
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-900">My Tasks</h1>
+        <p class="text-sm text-slate-500 mt-1">Stay on top of your campus commitments</p>
+      </div>
+
+      <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 p-5 rounded-2xl shadow-sm space-y-4">
+        <div class="flex justify-between items-center text-xs font-semibold text-slate-600">
+          <span>Overall Progress</span>
+          <span class="text-pinkbrand-600 font-bold">20%</span>
+        </div>
+        <div class="w-full bg-pinkbrand-100 h-2 rounded-full overflow-hidden">
+          <div class="bg-pinkbrand-600 h-full w-[20%] rounded-full"></div>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 p-4 rounded-xl flex items-center justify-between shadow-sm">
+          <div class="flex items-center gap-3">
+            <input type="checkbox" class="w-4 h-4 rounded text-pinkbrand-600 focus:ring-pinkbrand-500 border-pinkbrand-300">
+            <span class="text-sm font-medium text-slate-800">Attend Mid-Semester Examination</span>
+          </div>
+          <span class="text-xs text-slate-400">18 Sep</span>
+        </div>
+        <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 p-4 rounded-xl flex items-center justify-between shadow-sm">
+          <div class="flex items-center gap-3">
+            <input type="checkbox" class="w-4 h-4 rounded text-pinkbrand-600 focus:ring-pinkbrand-500 border-pinkbrand-300">
+            <span class="text-sm font-medium text-slate-800">Submit CSE Assignment</span>
+          </div>
+          <span class="text-xs text-slate-400">22 Sep</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- JAVASCRIPT FOR NAVIGATION -->
+  <script>
+    function switchTab(tabName) {
+      document.getElementById('view-dashboard').classList.add('hidden');
+      document.getElementById('view-notices').classList.add('hidden');
+      document.getElementById('view-changes').classList.add('hidden');
+      document.getElementById('view-tasks').classList.add('hidden');
+
+      ['dashboard', 'notices', 'changes', 'tasks'].forEach(tab => {
+        const btn = document.getElementById(`nav-${tab}`);
+        btn.className = "flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-pinkbrand-600";
       });
 
-      document.getElementById("task-count").innerText = taskCount;
-      document.getElementById("diff-count").innerText = diffCount;
-
-      lucide.createIcons();
+      document.getElementById(`view-${tabName}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`nav-${tabName}`);
+      activeBtn.className = "flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-pinkbrand-600 shadow-sm";
     }
-
-    // TAB NAVIGATION SWITCHER
-    function switchTab(tab) {
-      document.getElementById("view-feed").classList.add("hidden");
-      document.getElementById("view-tasks").classList.add("hidden");
-      document.getElementById("view-diffs").classList.add("hidden");
-
-      document.getElementById("tab-feed").className = "flex-1 py-2 text-center text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition";
-      document.getElementById("tab-tasks").className = "flex-1 py-2 text-center text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition";
-      document.getElementById("tab-diffs").className = "flex-1 py-2 text-center text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition";
-
-      document.getElementById(`view-${tab}`).classList.remove("hidden");
-      document.getElementById(`tab-${tab}`).className = "flex-1 py-2 text-center text-xs font-semibold rounded-lg bg-indigo-600 text-white shadow-sm transition";
-    }
-
-    // INITIAL ICON SETUP
-    lucide.createIcons();
   </script>
 </body>
 </html>
