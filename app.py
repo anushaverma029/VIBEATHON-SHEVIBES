@@ -1,354 +1,337 @@
-from flask import Flask, request, jsonify
-import mysql.connector
-import os
-from dotenv import load_dotenv
-import requests
-
-load_dotenv()
-from openai import OpenAI
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-import mysql.connector
-
-app = Flask(__name__)
-
-def ask_ai(prompt):
-    response = requests.post(
-        "http://localhost:11434/api/generate",
-        json={
-            "model": "llama3.2",
-            "prompt": prompt,
-            "stream": False
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusCue — Student Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            pinkbrand: {
+              50: '#fdf2f8',
+              100: '#fce7f3',
+              200: '#fbcfe8',
+              300: '#f472b6',
+              500: '#ec4899',
+              600: '#db2777',
+              700: '#be185d',
+              900: '#831843',
+            }
+          }
         }
-    )
-
-    return response.json()["response"]
-
-
-def get_db_connection():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="campuscue_db"
-    )
-
-
-@app.route("/")
-def home():
-    return "CampusCue backend is running!"
-
-
-@app.route("/test-db")
-def test_db():
-    connection = get_db_connection()
-    cursor = connection.cursor()
-
-    cursor.execute("SELECT DATABASE()")
-    result = cursor.fetchone()
-
-    cursor.close()
-    connection.close()
-
-    return f"Connected to database: {result[0]}"
-
-@app.route("/announcements", methods=["POST"])
-@app.route("/announcements", methods=["POST"])
-def add_announcement():
-    data = request.get_json()
-
-    title = data.get("title")
-    description = data.get("description")
-    category = data.get("category")
-    priority = data.get("priority", "normal")
-    target_audience = data.get("target_audience")
-    event_date = data.get("event_date")
-    source = data.get("source")
-
-    if not title or not description:
-        return jsonify({
-            "error": "Title and description are required"
-        }), 400
-
-    ai_text = ask_ai(f"""
-Analyze this campus announcement.
-
-Title: {title}
-Description: {description}
-
-Return ONLY in this exact format:
-
-Summary: <short student-friendly summary>
-Category: <category>
-Priority: <low, normal, or high>
-Target Audience: <who should care about this announcement>
-
-Do not add anything else.
-""")
-
-    ai_summary = ""
-    ai_category = ""
-    ai_priority = ""
-    ai_target_audience = ""
-
-    for line in ai_text.splitlines():
-        if line.startswith("Summary:"):
-            ai_summary = line.replace("Summary:", "").strip()
-        elif line.startswith("Category:"):
-            ai_category = line.replace("Category:", "").strip()
-        elif line.startswith("Priority:"):
-            ai_priority = line.replace("Priority:", "").strip()
-        elif line.startswith("Target Audience:"):
-            ai_target_audience = line.replace("Target Audience:", "").strip()
-
-    connection = get_db_connection()
-    cursor = connection.cursor()
-
-    query = """
-    INSERT INTO announcements
-    (title, description, category, priority,
-     target_audience, event_date, source,
-     ai_summary, ai_category, ai_priority, ai_target_audience)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """
-
-    values = (
-        title,
-        description,
-        category,
-        priority,
-        target_audience,
-        event_date,
-        source,
-        ai_summary,
-        ai_category,
-        ai_priority,
-        ai_target_audience
-    )
-
-    cursor.execute(query, values)
-    connection.commit()
-
-    cursor.close()
-    connection.close()
-
-    return jsonify({
-        "message": "Announcement added successfully!"
-    }), 201
-
-@app.route("/announcements", methods=["GET"])
-def get_announcements():
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-
-    cursor.execute("""
-        SELECT *
-        FROM announcements
-        ORDER BY created_at DESC
-    """)
-
-    announcements = cursor.fetchall()
-
-    cursor.close()
-    connection.close()
-
-    return jsonify(announcements)
-
-@app.route("/register", methods=["POST"])
-
-@app.route("/my-announcements/<int:user_id>", methods=["GET"])
-def get_my_announcements(user_id):
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-
-    cursor.execute("""
-        SELECT
-            announcements.*
-        FROM announcements
-        JOIN users
-        ON users.id = %s
-        WHERE
-            announcements.target_audience = 'All Students'
-            OR announcements.target_audience = users.course
-            OR announcements.target_audience = CONCAT('Year ', users.year)
-        ORDER BY announcements.created_at DESC
-    """, (user_id,))
-
-    announcements = cursor.fetchall()
-
-    cursor.close()
-    connection.close()
-
-    return jsonify(announcements)
-
-def register():
-    data = request.get_json()
-
-    name = data.get("name")
-    email = data.get("email")
-    password = data.get("password")
-    course = data.get("course")
-    year = data.get("year")
-
-    if not name or not email or not password:
-        return jsonify({
-            "error": "Name, email and password are required"
-        }), 400
-
-    connection = get_db_connection()
-    cursor = connection.cursor()
-
-    query = """
-        INSERT INTO users (name, email, password, course, year)
-        VALUES (%s, %s, %s, %s, %s)
-    """
-
-    values = (name, email, password, course, year)
-
-    cursor.execute(query, values)
-    connection.commit()
-
-    cursor.close()
-    connection.close()
-
-    return jsonify({
-        "message": "User registered successfully!"
-    }), 201
-@app.route("/login", methods=["POST"])
-def login():
-    data = request.get_json()
-
-    email = data.get("email")
-    password = data.get("password")
-
-    if not email or not password:
-        return jsonify({
-            "error": "Email and password are required"
-        }), 400
-    
-
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-
-    cursor.execute("""
-        SELECT id, name, email, password, course, year
-        FROM users
-        WHERE email = %s
-    """, (email,))
-
-    user = cursor.fetchone()
-
-    cursor.close()
-    connection.close()
-
-    if not user:
-        return jsonify({
-            "error": "Invalid email or password"
-        }), 401
-
-    if user["password"] != password:
-        return jsonify({
-            "error": "Invalid email or password"
-        }), 401
-
-    return jsonify({
-        "message": "Login successful!",
-        "user": {
-            "id": user["id"],
-            "name": user["name"],
-            "email": user["email"],
-            "course": user["course"],
-            "year": user["year"]
-        }
-    }), 200
-
-@app.route("/ai-test", methods=["POST"])
-def ai_test():
-    data = request.get_json()
-
-    text = data.get("text")
-
-    if not text:
-        return jsonify({
-            "error": "Text is required"
-        }), 400
-
-    ai_response = ask_ai(
-        f"Understand this campus announcement and summarize it for a student:\n{text}"
-    )
-
-    return jsonify({
-        "ai_response": ai_response
-    })
-
-@app.route("/detect-change", methods=["POST"])
-@app.route("/detect-change", methods=["POST"])
-def detect_change():
-    data = request.get_json()
-
-    old_text = data.get("old_text")
-    new_text = data.get("new_text")
-
-    if not old_text or not new_text:
-        return jsonify({
-            "error": "Both old_text and new_text are required"
-        }), 400
-
-    ai_response = ask_ai(f"""
-Compare these two campus announcements.
-
-OLD ANNOUNCEMENT:
-{old_text}
-
-NEW ANNOUNCEMENT:
-{new_text}
-
-Tell me:
-1. Whether anything changed
-2. What changed
-3. Whether the change is important for students
-
-Return a short, clear response.
-""")
-
-    return jsonify({
-        "change_analysis": ai_response
-    })
-
-@app.route("/alerts/<int:announcement_id>", methods=["GET"])
-def get_alert(announcement_id):
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-
-    cursor.execute("""
-        SELECT title, ai_summary, ai_priority
-        FROM announcements
-        WHERE id = %s
-    """, (announcement_id,))
-
-    announcement = cursor.fetchone()
-
-    cursor.close()
-    connection.close()
-
-    if not announcement:
-        return jsonify({
-            "error": "Announcement not found"
-        }), 404
-
-    if announcement["ai_priority"].lower() == "high":
-        return jsonify({
-            "alert": True,
-            "message": "Important CampusCue Update",
-            "title": announcement["title"],
-            "summary": announcement["ai_summary"]
-        })
-
-    return jsonify({
-        "alert": False,
-        "message": "No urgent alert for this announcement."
-    })
-
-if __name__ == "__main__":
+      }
+    }
+  </script>
+  <style>
+    /* Custom background pattern featuring hearts, bows, and sparkles */
+    .bg-pattern {
+      background-color: #fdf2f8;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><g fill="none" stroke="%23db2777" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.35"><path d="M40 30 C35 20, 20 20, 20 35 C20 45, 40 65, 40 65 C40 65, 60 45, 60 35 C60 20, 45 20, 40 30 Z" transform="scale(0.3) translate(60, 40)"/><path d="M140 130 C135 120, 120 120, 120 135 C120 145, 140 165, 140 165 C140 165, 160 145, 160 135 C160 120, 145 120, 140 130 Z" transform="scale(0.3) translate(280, 240)"/><path d="M120 40 C110 30, 95 30, 95 45 C95 55, 120 75, 120 75 C120 75, 145 55, 145 45 C145 30, 130 30, 120 40 Z" transform="scale(0.25) translate(200, 40)"/><g transform="translate(140, 30) scale(0.35)"><path d="M25 25 C10 10, 0 25, 20 30 C0 35, 10 50, 25 35 C40 50, 50 35, 30 30 C50 25, 40 10, 25 25 Z"/><path d="M20 30 L10 50 M30 30 L40 50"/></g><g transform="translate(30, 130) scale(0.35)"><path d="M25 25 C10 10, 0 25, 20 30 C0 35, 10 50, 25 35 C40 50, 50 35, 30 30 C50 25, 40 10, 25 25 Z"/><path d="M20 30 L10 50 M30 30 L40 50"/></g><path d="M100 100 M100 92 L100 108 M92 100 L108 100 M95 95 L105 105 M105 95 L95 105" transform="scale(0.4) translate(40, 180)"/><path d="M100 100 M100 92 L100 108 M92 100 L108 100 M95 95 L105 105 M105 95 L95 105" transform="scale(0.4) translate(380, 80)"/><path d="M100 100 M100 92 L100 108 M92 100 L108 100" transform="scale(0.3) translate(180, 380)"/><circle cx="20" cy="90" r="1" fill="%23db2777" opacity="0.4"/><circle cx="170" cy="80" r="1" fill="%23db2777" opacity="0.4"/><circle cx="110" cy="170" r="1" fill="%23db2777" opacity="0.4"/><circle cx="80" cy="20" r="1" fill="%23db2777" opacity="0.4"/></g></svg>');
+      background-repeat: repeat;
+      background-size: 180px 180px;
+    }
+  </style>
+</head>
+<body class="bg-pattern text-slate-800 font-sans min-h-screen flex flex-col antialiased">
+
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="bg-white/90 backdrop-blur-md border-b border-pinkbrand-100 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-xl bg-pinkbrand-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-pinkbrand-200">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <span class="font-bold text-xl text-slate-900 tracking-tight">CampusCue</span>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="hidden md:flex items-center space-x-1 bg-pinkbrand-50/80 p-1 rounded-xl border border-pinkbrand-100">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-pinkbrand-600 shadow-sm">
+          <i class="fa-solid fa-border-all"></i> Dashboard
+        </button>
+        <button onclick="switchTab('notices')" id="nav-notices" class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-pinkbrand-600">
+          <i class="fa-solid fa-bullhorn"></i> Notices
+        </button>
+        <button onclick="switchTab('changes')" id="nav-changes" class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-pinkbrand-600">
+          <i class="fa-solid fa-clock-rotate-left"></i> Changes
+        </button>
+        <button onclick="switchTab('tasks')" id="nav-tasks" class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-pinkbrand-600">
+          <i class="fa-solid fa-list-check"></i> Tasks 
+          <span id="badge-tasks-count" class="bg-pinkbrand-200 text-pinkbrand-700 text-xs px-2 py-0.5 rounded-full font-bold">4</span>
+        </button>
+      </nav>
+
+      <!-- Search & User Profile -->
+      <div class="flex items-center gap-3">
+        <div class="relative hidden sm:block w-48 lg:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-pinkbrand-300 text-sm"></i>
+          <input type="text" placeholder="Search notices..." class="w-full bg-white/80 border border-pinkbrand-200 rounded-lg pl-9 pr-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pinkbrand-500 text-slate-700 placeholder-slate-400 transition">
+        </div>
+
+        <div class="flex items-center gap-2 border-l border-pinkbrand-100 pl-3">
+          <div class="w-9 h-9 rounded-full bg-pinkbrand-600 text-white flex items-center justify-center font-semibold text-sm shadow-sm">
+            AN
+          </div>
+          <span class="font-medium text-sm text-slate-700 hidden lg:inline">Ananya</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-6xl w-full mx-auto px-4 py-6 flex-1 space-y-8">
+
+    <!-- VIEW 1: DASHBOARD MAIN -->
+    <div id="view-dashboard" class="space-y-8">
+      
+      <!-- Greeting Banner -->
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-900 flex items-center gap-2">
+          Good evening, Ananya 👋
+        </h1>
+        <p class="text-sm text-slate-500 mt-1">Here's what's happening on campus today.</p>
+      </div>
+
+      <!-- Overview Stats Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <!-- Card 1 -->
+        <div class="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-rose-100 shadow-sm hover:shadow-md transition">
+          <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div class="text-2xl font-bold text-slate-900">5</div>
+          <div class="text-xs font-medium text-slate-500 mt-1">Important Updates</div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-pinkbrand-100 shadow-sm hover:shadow-md transition">
+          <div class="w-8 h-8 rounded-lg bg-pinkbrand-50 text-pinkbrand-600 flex items-center justify-center mb-3">
+            <i class="fa-solid fa-envelope-open-text"></i>
+          </div>
+          <div class="text-2xl font-bold text-slate-900">8</div>
+          <div class="text-xs font-medium text-slate-500 mt-1">New Notices</div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-amber-100 shadow-sm hover:shadow-md transition">
+          <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+            <i class="fa-solid fa-arrows-rotate"></i>
+          </div>
+          <div class="text-2xl font-bold text-slate-900">2</div>
+          <div class="text-xs font-medium text-slate-500 mt-1">Recent Changes</div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-emerald-100 shadow-sm hover:shadow-md transition">
+          <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+            <i class="fa-solid fa-square-check"></i>
+          </div>
+          <div class="text-2xl font-bold text-slate-900">3</div>
+          <div class="text-xs font-medium text-slate-500 mt-1">Pending Tasks</div>
+        </div>
+      </div>
+
+      <!-- Priority Section: Important for you -->
+      <section class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-lg text-slate-900 flex items-center gap-2">
+            Important for you
+          </h2>
+          <button onclick="switchTab('notices')" class="text-xs font-semibold text-pinkbrand-600 hover:text-pinkbrand-700 flex items-center gap-1">
+            View all <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          
+          <!-- Notice Card 1 -->
+          <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Exams
+                </span>
+                <span class="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <i class="fa-solid fa-arrows-rotate text-[10px]"></i> Updated
+                </span>
+              </div>
+
+              <h3 class="font-bold text-base text-slate-900 leading-snug">Mid-Semester Examination Schedule</h3>
+
+              <div class="grid grid-cols-2 gap-2 bg-pinkbrand-50/60 p-3 rounded-xl border border-pinkbrand-100 text-xs">
+                <div>
+                  <span class="text-slate-400 font-medium block uppercase text-[10px]">For</span>
+                  <span class="font-bold text-slate-700">1st Year ECE</span>
+                </div>
+                <div>
+                  <span class="text-slate-400 font-medium block uppercase text-[10px]">Date</span>
+                  <span class="font-bold text-slate-700">18 September</span>
+                </div>
+                <div>
+                  <span class="text-slate-400 font-medium block uppercase text-[10px]">Time</span>
+                  <span class="font-bold text-slate-700">11:00 AM</span>
+                </div>
+                <div>
+                  <span class="text-slate-400 font-medium block uppercase text-[10px]">Venue</span>
+                  <span class="font-bold text-slate-700">Block C</span>
+                </div>
+              </div>
+            </div>
+
+            <button onclick="switchTab('notices')" class="w-full bg-pinkbrand-600 hover:bg-pinkbrand-700 text-white font-semibold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-sm shadow-pinkbrand-200">
+              View Notice <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+
+          <!-- Notice Card 2 -->
+          <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Deadlines
+                </span>
+                <span class="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <i class="fa-solid fa-arrows-rotate text-[10px]"></i> Updated
+                </span>
+              </div>
+
+              <h3 class="font-bold text-base text-slate-900 leading-snug">Assignment Submission Deadline Extended</h3>
+
+              <p class="text-xs text-slate-500 leading-relaxed">
+                The assignment deadline for CSE-201 has been moved to 22 September. Submit online before 11:59 PM.
+              </p>
+            </div>
+
+            <button onclick="switchTab('notices')" class="w-full bg-pinkbrand-600 hover:bg-pinkbrand-700 text-white font-semibold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-sm shadow-pinkbrand-200">
+              View Notice <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
+    <!-- VIEW 2: NOTICES -->
+    <div id="view-notices" class="hidden space-y-6">
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-900">All Notices</h1>
+        <p class="text-sm text-slate-500 mt-1">Browse and search through all campus notices</p>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-2">
+        <button class="bg-pinkbrand-600 text-white px-4 py-1.5 rounded-xl text-xs font-bold shadow-sm">All</button>
+        <button class="bg-white/90 border border-pinkbrand-100 text-slate-600 hover:bg-pinkbrand-50 px-4 py-1.5 rounded-xl text-xs font-semibold">Exams</button>
+        <button class="bg-white/90 border border-pinkbrand-100 text-slate-600 hover:bg-pinkbrand-50 px-4 py-1.5 rounded-xl text-xs font-semibold">Events</button>
+        <button class="bg-white/90 border border-pinkbrand-100 text-slate-600 hover:bg-pinkbrand-50 px-4 py-1.5 rounded-xl text-xs font-semibold">Deadlines</button>
+        <button class="bg-white/90 border border-pinkbrand-100 text-slate-600 hover:bg-pinkbrand-50 px-4 py-1.5 rounded-xl text-xs font-semibold">Academic</button>
+      </div>
+
+      <!-- List -->
+      <div class="space-y-3">
+        <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 p-4 rounded-2xl shadow-sm flex items-center justify-between">
+          <div>
+            <h4 class="font-bold text-slate-900 text-sm">Annual Tech Fest Aurora 2026</h4>
+            <p class="text-xs text-slate-500 mt-1">Registration open for all branches from 20-25 September.</p>
+          </div>
+          <span class="text-xs font-bold text-pinkbrand-600 bg-pinkbrand-50 px-3 py-1 rounded-lg">Events</span>
+        </div>
+        <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 p-4 rounded-2xl shadow-sm flex items-center justify-between">
+          <div>
+            <h4 class="font-bold text-slate-900 text-sm">Library Timing Revision</h4>
+            <p class="text-xs text-slate-500 mt-1">Library will now stay open until 10 PM on weekdays.</p>
+          </div>
+          <span class="text-xs font-bold text-pinkbrand-600 bg-pinkbrand-50 px-3 py-1 rounded-lg">Administrative</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: RECENT CHANGES -->
+    <div id="view-changes" class="hidden space-y-6">
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-900">Recent Changes</h1>
+        <p class="text-sm text-slate-500 mt-1">See exactly what changed in your campus notices</p>
+      </div>
+
+      <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 p-5 rounded-2xl shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
+            Venue Shift
+          </span>
+          <span class="text-xs text-slate-400">Updated 2 hours ago</span>
+        </div>
+        <h3 class="font-bold text-slate-900 text-base">Mid-Semester Examination Schedule</h3>
+        <div class="flex items-center gap-3 text-xs bg-pinkbrand-50/60 p-3 rounded-xl">
+          <span class="text-slate-400 line-through">Block A</span>
+          <i class="fa-solid fa-arrow-right text-pinkbrand-600"></i>
+          <span class="font-bold text-pinkbrand-700">Block C</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: TASKS -->
+    <div id="view-tasks" class="hidden space-y-6">
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-900">My Tasks</h1>
+        <p class="text-sm text-slate-500 mt-1">Stay on top of your campus commitments</p>
+      </div>
+
+      <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 p-5 rounded-2xl shadow-sm space-y-4">
+        <div class="flex justify-between items-center text-xs font-semibold text-slate-600">
+          <span>Overall Progress</span>
+          <span class="text-pinkbrand-600 font-bold">20%</span>
+        </div>
+        <div class="w-full bg-pinkbrand-100 h-2 rounded-full overflow-hidden">
+          <div class="bg-pinkbrand-600 h-full w-[20%] rounded-full"></div>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 p-4 rounded-xl flex items-center justify-between shadow-sm">
+          <div class="flex items-center gap-3">
+            <input type="checkbox" class="w-4 h-4 rounded text-pinkbrand-600 focus:ring-pinkbrand-500 border-pinkbrand-300">
+            <span class="text-sm font-medium text-slate-800">Attend Mid-Semester Examination</span>
+          </div>
+          <span class="text-xs text-slate-400">18 Sep</span>
+        </div>
+        <div class="bg-white/90 backdrop-blur-sm border border-pinkbrand-100 p-4 rounded-xl flex items-center justify-between shadow-sm">
+          <div class="flex items-center gap-3">
+            <input type="checkbox" class="w-4 h-4 rounded text-pinkbrand-600 focus:ring-pinkbrand-500 border-pinkbrand-300">
+            <span class="text-sm font-medium text-slate-800">Submit CSE Assignment</span>
+          </div>
+          <span class="text-xs text-slate-400">22 Sep</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- JAVASCRIPT FOR NAVIGATION -->
+  <script>
+    function switchTab(tabName) {
+      document.getElementById('view-dashboard').classList.add('hidden');
+      document.getElementById('view-notices').classList.add('hidden');
+      document.getElementById('view-changes').classList.add('hidden');
+      document.getElementById('view-tasks').classList.add('hidden');
+
+      ['dashboard', 'notices', 'changes', 'tasks'].forEach(tab => {
+        const btn = document.getElementById(`nav-${tab}`);
+        btn.className = "flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-pinkbrand-600";
+      });
+
+      document.getElementById(`view-${tabName}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`nav-${tabName}`);
+      activeBtn.className = "flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-pinkbrand-600 shadow-sm";
+    }
+  </script>
+</body>
+</html>
     app.run(debug=True)
