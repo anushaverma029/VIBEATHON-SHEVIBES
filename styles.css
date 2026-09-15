@@ -28,6 +28,11 @@ body {
     flex-direction: column;
 }
 
+.login-tabs {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
 /* HEADING */
 h2 {
     font-size: 30px;
