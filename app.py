@@ -1562,6 +1562,34 @@ if __name__ == "__main__":
 
     init_db()
 
+        connection = get_db_connection()
+    cursor = connection.cursor()
+
+    admin = cursor.execute(
+        "SELECT id FROM users WHERE email = ?",
+        ("sharma@campus.edu.in",)
+    ).fetchone()
+
+    if not admin:
+        cursor.execute(
+            """
+            INSERT INTO users
+            (name, email, password, course, year, interests)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "Ms. Sharma",
+                "sharma@campus.edu.in",
+                generate_password_hash("admin123"),
+                "Science",
+                10,
+                "Teaching,Science"
+            )
+        )
+        connection.commit()
+
+    connection.close()
+
     print("---------------------------------------")
     print("       CampusCue Backend")
     print("---------------------------------------")
