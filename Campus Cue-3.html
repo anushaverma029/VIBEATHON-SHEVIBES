@@ -304,7 +304,7 @@
   <script>
 const API_BASE = "https://vibeathon-shevibes.onrender.com";
 
-let user = JSON.parse(localStorage.getItem("user"));
+let user = JSON.parse(sessionStorage.getItem("campuscue_user") || localStorage.getItem("user"));
 
 if (!user) {
     alert("Please login first.");
