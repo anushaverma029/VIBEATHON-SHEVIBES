@@ -121,10 +121,10 @@
                 return;
             }
 
-            if (!response.ok) {
-                errorElement.textContent = data.error || "Invalid email or password.";
-                return;
-            }
+           if (!response.ok) {
+    errorElement.textContent = JSON.stringify(data);
+    return;
+}
 
             if (data.user) {
     sessionStorage.setItem("campuscue_user", JSON.stringify(data.user));
