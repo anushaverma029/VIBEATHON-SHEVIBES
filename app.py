@@ -169,6 +169,30 @@ def login():
         }
     })
 
+@app.route("/api/change-admin-password", methods=["POST"])
+def change_admin_password():
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    hashed_password = generate_password_hash("admin123")
+
+    cursor.execute("""
+        UPDATE users
+        SET password = ?
+        WHERE email = ?
+    """, (
+        hashed_password,
+        "demo@campus.edu.in"
+    ))
+
+    connection.commit()
+    connection.close()
+
+    return jsonify({
+        "message": "Admin password updated successfully"
+    })
+
 
 # =========================================================
 # GET USER PROFILE
