@@ -1581,6 +1581,29 @@ def student_alerts(user_id):
         "alerts": alerts,
         "count": len(alerts)
     })
+
+@app.route("/api/change-admin-email", methods=["POST"])
+def change_admin_email():
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        UPDATE users
+        SET email = ?
+        WHERE id = ?
+    """, (
+        "admin@campus.edu.in",
+        2
+    ))
+
+    connection.commit()
+    connection.close()
+
+    return jsonify({
+        "message": "Admin email updated successfully"
+    })
+    
 if __name__ == "__main__":
     import os
 
